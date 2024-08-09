@@ -1,5 +1,3 @@
-// /src/controllers/candidateController.ts
-
 import { Request, Response } from 'express';
 import Candidate from '../models/candidateModel';
 
