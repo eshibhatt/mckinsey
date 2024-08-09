@@ -2,19 +2,24 @@ import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import Account from '../models/accountModel';
+import { accountLoginSchema, accountSchema } from '../validator/accountValidator';
 
 export const register = async (req: Request, res: Response) => {
+	const validation = accountSchema.safeParse(req.body);
+	if (!validation.success) {
+		return res.status(400).json({ errors: validation.error.errors });
+	}
 	if (!req.body.role) {
 		req.body.role = 'Delivery Admin';
 	}
-	const { username, password, role } = req.body;
-
-	const existingAccount = await Account.findOne({ username }).exec();
-	if (existingAccount) {
-		return res.status(400).json({ message: 'Username is already taken.' });
-	}
 
 	try {
+		const { username, password, role } = req.body;
+
+		const existingAccount = await Account.findOne({ username }).exec();
+		if (existingAccount) {
+			return res.status(400).json({ message: 'Username is already taken.' });
+		}
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const account = new Account({ username, password: hashedPassword, role });
 		await account.save();
@@ -30,6 +35,11 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
+	const validation = accountLoginSchema.safeParse(req.body);
+	if (!validation.success) {
+		return res.status(400).json({ errors: validation.error.errors });
+	}
+
 	try {
 		const { username, password } = req.body;
 
@@ -47,15 +57,15 @@ export const login = async (req: Request, res: Response) => {
 			{ userId: user._id, role: user.role },
 			process.env.JWT_SECRET as string,
 			{
-				expiresIn: '1d', // Token expiration
+				expiresIn: '1d',
 			}
 		);
 
 		res.cookie('token', token, {
-			httpOnly: true, // Secure the cookie from client-side scripts
-			secure: process.env.NODE_ENV === 'production', // Secure cookie in production
-			maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
-			sameSite: 'strict', // CSRF protection
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge: 24 * 60 * 60 * 1000,
+			sameSite: 'strict',
 		});
 
 		res.status(200).json({ message: 'Logged in successfully' });
@@ -69,9 +79,13 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = (req: Request, res: Response) => {
+	if (!req.cookies.token) {
+		return res.status(400).json({ message: 'User is not logged in' });
+	}
+
 	res.cookie('token', '', {
 		httpOnly: true,
-		expires: new Date(0), // Expire the cookie immediately
+		expires: new Date(0),
 		sameSite: 'strict',
 	});
 

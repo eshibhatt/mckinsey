@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
 import Question from '../models/questionModel';
+import { questionSchema } from '../validator/questionValidator';
 export const createQuestion = async (req: Request, res: Response) => {
-	const { text, options, marks, negativeMarks, correctOption, tags } = req.body;
-	if (options.length < 4) {
-		return res.status(400).json({ error: 'At least 4 options are required.' });
+	const validation = questionSchema.safeParse(req.body);
+	if (!validation.success) {
+		return res.status(400).json({ errors: validation.error.errors });
 	}
 
 	try {
+		const { text, options, marks, negativeMarks, correctOption, tags } = req.body;
 		const question = new Question({
 			text,
 			options,
@@ -40,6 +42,9 @@ export const getQuestions = async (req: Request, res: Response) => {
 };
 
 export const getQuestionById = async (req: Request, res: Response) => {
+	if (!req.params.id) {
+		return res.status(400).json({ error: 'Question ID is required.' });
+	}
 	try {
 		const question = await Question.findById(req.params.id);
 		if (!question) {
@@ -56,6 +61,13 @@ export const getQuestionById = async (req: Request, res: Response) => {
 };
 
 export const updateQuestion = async (req: Request, res: Response) => {
+	if (!req.params.id) {
+		return res.status(400).json({ error: 'Question ID is required to update.' });
+	}
+	const validation = questionSchema.safeParse(req.body);
+	if (!validation.success) {
+		return res.status(400).json({ errors: validation.error.errors });
+	}
 	try {
 		const question = await Question.findByIdAndUpdate(req.params.id, req.body, {
 			new: true,
@@ -75,6 +87,9 @@ export const updateQuestion = async (req: Request, res: Response) => {
 };
 
 export const deleteQuestion = async (req: Request, res: Response) => {
+	if (!req.params.id) {
+		return res.status(400).json({ error: 'Question ID is required to delete.' });
+	}
 	try {
 		const question = await Question.findByIdAndDelete(req.params.id);
 		if (!question) {
