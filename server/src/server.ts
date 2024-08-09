@@ -3,6 +3,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import questionRoutes from './routes/questionRoutes';
+import candidateRoutes from './routes/candidateRoutes';
+import authRoutes from './routes/authRoutes';
+import errorHandler from './utils/errorHandler';
 
 dotenv.config();
 
@@ -15,7 +18,11 @@ mongoose
 	.then(() => console.log('MongoDB connected'))
 	.catch((err) => console.log(err));
 
-app.use('/api', questionRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/candidates', candidateRoutes);
+
+app.use(errorHandler);
 
 app.route('/api-status').get((req, res) => {
 		res.status(200).json({
