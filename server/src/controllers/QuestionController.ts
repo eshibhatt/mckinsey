@@ -1,8 +1,20 @@
 import { Request, Response } from 'express';
 import Question from '../models/questionModel';
 export const createQuestion = async (req: Request, res: Response) => {
+	const { text, options, marks, negativeMarks, correctOption, tags } = req.body;
+	if (options.length < 4) {
+		return res.status(400).json({ error: 'At least 4 options are required.' });
+	}
+
 	try {
-		const question = new Question(req.body);
+		const question = new Question({
+			text,
+			options,
+			marks,
+			negativeMarks,
+			correctOption,
+			tags,
+		});
 		await question.save();
 		res.status(201).json(question);
 	} catch (error) {

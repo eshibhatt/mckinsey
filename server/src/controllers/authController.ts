@@ -8,6 +8,7 @@ export const register = async (req: Request, res: Response) => {
 		req.body.role = 'Delivery Admin';
 	}
 	const { username, password, role } = req.body;
+
 	const existingAccount = await Account.findOne({ username }).exec();
 	if (existingAccount) {
 		return res.status(400).json({ message: 'Username is already taken.' });
@@ -68,12 +69,11 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = (req: Request, res: Response) => {
-  res.cookie('token', '', {
-    httpOnly: true,
-    expires: new Date(0), // Expire the cookie immediately
-    sameSite: 'strict',
-  });
+	res.cookie('token', '', {
+		httpOnly: true,
+		expires: new Date(0), // Expire the cookie immediately
+		sameSite: 'strict',
+	});
 
-  res.status(200).json({ message: 'Logged out successfully' });
+	res.status(200).json({ message: 'Logged out successfully' });
 };
-
